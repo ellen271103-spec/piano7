@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>어린이 피아노 교실</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      background-color: #1a1a1a;
+      display: flex;
+      flex-direction: column;
+      font-family: -apple-system, BlinkMacSystemFont, 'Pretendard', 'Malgun Gothic', sans-serif;
+    }
+
+    /* 상단 타이틀 바 */
+    .top-bar {
+      height: 46px;
+      background: #111;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 700;
+      border-bottom: 2px solid #2a2a2a;
+      flex-shrink: 0;
+    }
+
+    /* 피아노 메인 스테이지 */
+    .piano-stage {
+      position: relative;
+      width: 100%;
+      height: calc(100vh - 46px);
+      height: calc(100dvh - 46px);
+      background: #000;
+      padding: 0 4px 6px 4px;
+      box-sizing: border-box;
+    }
+
+    /* 흰 건반 9개 레이어 */
+    .white-keys {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      position: relative;
+      z-index: 1;
+    }
+
+    .key.white {
+      flex: 1;
+      height: 100%;
+      background: linear-gradient(to bottom, #ffffff 0%, #f7f7f7 85%, #e2e2e2 100%);
+      border: 1px solid #b5b5b5;
+      border-top: none;
+      border-radius: 0 0 7px 7px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      position: relative;
+      cursor: pointer;
+    }
+
+    .key.white.active {
+      background: #d0d0d0 !important;
+      box-shadow: inset 0 3px 6px rgba(0,0,0,0.35);
+      transform: translateY(2px);
+    }
+
+    /* 계이름: 검은 건반(58%) 바로 아래인 62% 지점 */
+    .note-name {
+      position: absolute;
+      top: 62%;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: clamp(14px, 2.3vw, 24px);
+      font-weight: 800;
+      color: #2b2b2b;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    /* 검은 건반 레이어 (9개 흰 건반 비율 기준) */
+    .black-keys {
+      position: absolute;
+      top: 0;
+      left: 4px;
+      right: 4px;
+      height: 58%;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .key.black {
+      position: absolute;
+      top: 0;
+      width: 6.8%; /* 9개 건반에 맞는 최적의 검은 건반 두께 */
+      height: 100%;
+      background: linear-gradient(180deg, #3d3d3d 0%, #1a1a1a 80%, #000000 100%);
+      border-radius: 0 0 5px 5px;
+      box-shadow: 2px 4px 8px rgba(0,0,0,0.65), inset 0 -1px 2px rgba(255,255,255,0.25);
+      cursor: pointer;
+      pointer-events: auto;
+    }
+
+    .key.black.active {
+      background: #0d0d0d !important;
+      box-shadow: 1px 2px 3px rgba(0,0,0,0.9);
+      transform: translateY(2px);
+    }
+
+    /* 흰 건반 9개 경계선 기준 정밀 위치 계산 */
+    .bk-1 { left: calc((100% / 9) * 1 - 3.4%); } /* 도# */
+    .bk-2 { left: calc((100% / 9) * 2 - 3.4%); } /* 레# */
+    .bk-3 { left: calc((100% / 9) * 4 - 3.4%); } /* 파# */
+    .bk-4 { left: calc((100% / 9) * 5 - 3.4%); } /* 솔# */
+    .bk-5 { left: calc((100% / 9) * 6 - 3.4%); } /* 라# */
+    .bk-6 { left: calc((100% / 9) * 8 - 3.4%); } /* 높은 도# */
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    🎹 피아노 연습 (도 ~ 높은 레)
+  </div>
+
+  <div class="piano-stage" id="piano-stage">
+    <!-- 흰 건반 9개 (도 ~ 높은 레) -->
+    <div class="white-keys">
+      <div class="key white" data-note="C4"><span class="note-name">도</span></div>
+      <div class="key white" data-note="D4"><span class="note-name">레</span></div>
+      <div class="key white" data-note="E4"><span class="note-name">미</span></div>
+      <div class="key white" data-note="F4"><span class="note-name">파</span></div>
+      <div class="key white" data-note="G4"><span class="note-name">솔</span></div>
+      <div class="key white" data-note="A4"><span class="note-name">라</span></div>
+      <div class="key white" data-note="B4"><span class="note-name">시</span></div>
+      <div class="key white" data-note="C5"><span class="note-name">높은도</span></div>
+      <div class="key white" data-note="D5"><span class="note-name">높은레</span></div>
+    </div>
+
+    <!-- 검은 건반 6개 -->
+    <div class="black-keys">
+      <div class="key black bk-1" data-note="C#4"></div>
+      <div class="key black bk-2" data-note="D#4"></div>
+      <div class="key black bk-3" data-note="F#4"></div>
+      <div class="key black bk-4" data-note="G#4"></div>
+      <div class="key black bk-5" data-note="A#4"></div>
+      <div class="key black bk-6" data-note="C#5"></div>
+    </div>
+  </div>
+
+  <script>
+    // 도(C4)부터 높은 레(D5)까지의 정확한 음계 주파수 테이블
+    const FREQS = {
+      'C4': 261.63, 'C#4': 277.18,
+      'D4': 293.66, 'D#4': 311.13,
+      'E4': 329.63,
+      'F4': 349.23, 'F#4': 369.99,
+      'G4': 392.00, 'G#4': 415.30,
+      'A4': 440.00, 'A#4': 466.16,
+      'B4': 493.88,
+      'C5': 523.25, 'C#5': 554.37,
+      'D5': 587.33
+    };
+
+    // 지연 최소화를 위한 사전 오디오 초기화
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+    try {
+      audioCtx = new AudioContextClass({ latencyHint: 'interactive' });
+    } catch (e) {}
+
+    function wakeAudio() {
+      if (!audioCtx) {
+        audioCtx = new AudioContextClass({ latencyHint: 'interactive' });
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    // 터치 즉시 소리가 나는 경량 사운드 엔진
+    function playTone(note) {
+      wakeAudio();
+      const freq = FREQS[note];
+      if (!freq || !audioCtx) return;
+
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, now);
+
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.85, now + 0.003);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.1);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start(now);
+      osc.stop(now + 1.1);
+    }
+
+    const activeTouches = new Map();
+
+    function pressKey(keyEl) {
+      if (!keyEl) return;
+      keyEl.classList.add('active');
+      playTone(keyEl.dataset.note);
+    }
+
+    function releaseKey(keyEl) {
+      if (!keyEl) return;
+      keyEl.classList.remove('active');
+    }
+
+    const stage = document.getElementById('piano-stage');
+
+    // 멀티 터치 시작
+    stage.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      wakeAudio();
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const t = e.changedTouches[i];
+        const target = document.elementFromPoint(t.clientX, t.clientY);
+        const keyEl = target ? target.closest('.key') : null;
+        if (keyEl) {
+          activeTouches.set(t.identifier, keyEl);
+          pressKey(keyEl);
+        }
+      }
+    }, { passive: false });
+
+    // 손가락 미끄러짐(글라이딩)
+    stage.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const t = e.changedTouches[i];
+        const target = document.elementFromPoint(t.clientX, t.clientY);
+        const newKey = target ? target.closest('.key') : null;
+        const oldKey = activeTouches.get(t.identifier);
+
+        if (newKey !== oldKey) {
+          if (oldKey) releaseKey(oldKey);
+          if (newKey) {
+            pressKey(newKey);
+            activeTouches.set(t.identifier, newKey);
+          } else {
+            activeTouches.delete(t.identifier);
+          }
+        }
+      }
+    }, { passive: false });
+
+    // 터치 종료
+    function handleTouchEnd(e) {
+      e.preventDefault();
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const t = e.changedTouches[i];
+        const keyEl = activeTouches.get(t.identifier);
+        if (keyEl) {
+          releaseKey(keyEl);
+          activeTouches.delete(t.identifier);
+        }
+      }
+    }
+
+    stage.addEventListener('touchend', handleTouchEnd, { passive: false });
+    stage.addEventListener('touchcancel', handleTouchEnd, { passive: false });
+
+    // PC 마우스 테스트 지원
+    let isMouseDown = false;
+    let currentMouseKey = null;
+
+    stage.addEventListener('mousedown', (e) => {
+      wakeAudio();
+      isMouseDown = true;
+      const keyEl = e.target.closest('.key');
+      if (keyEl) {
+        currentMouseKey = keyEl;
+        pressKey(keyEl);
+      }
+    });
+
+    stage.addEventListener('mousemove', (e) => {
+      if (!isMouseDown) return;
+      const keyEl = e.target.closest('.key');
+      if (keyEl !== currentMouseKey) {
+        if (currentMouseKey) releaseKey(currentMouseKey);
+        if (keyEl) {
+          currentMouseKey = keyEl;
+          pressKey(keyEl);
+        } else {
+          currentMouseKey = null;
+        }
+      }
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (isMouseDown && currentMouseKey) {
+        releaseKey(currentMouseKey);
+      }
+      isMouseDown = false;
+      currentMouseKey = null;
+    });
+  </script>
+</body>
+</html>
